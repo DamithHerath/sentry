@@ -1,5 +1,4 @@
 import React from 'react';
-import styled, {css} from 'react-emotion';
 
 import {Panel, PanelBody, PanelItem, PanelHeader} from 'app/components/panels';
 import {t} from 'app/locale';
@@ -8,13 +7,40 @@ import Confirm from 'app/components/confirm';
 import EmptyMessage from 'app/views/settings/components/emptyMessage';
 import space from 'app/styles/space';
 
-import {Trigger} from '../types';
-import getTriggerConditionDisplayName from '../utils/getTriggerConditionDisplayName';
+import {IncidentRule, Trigger} from '../types';
+
+enum ActionType {
+  EMAIL = 0,
+  SLACK = 1,
+  PAGER_DUTY = 2,
+}
+
+enum TargetType {
+  // The name can be customized for each integration. Email for email, channel for slack, service for Pagerduty). We probably won't support this for email at first, since we need to be careful not to enable spam
+  SPECIFIC = 0,
+
+  // Just works with email for now, grabs given user's email address
+  USER = 1,
+
+  // Just works with email for now, grabs the emails for all team members
+  TEAM = 2,
+}
+
+type Action = {
+  id?: string;
+  type: ActionType;
+
+  targetType: TargetType;
+
+  // How to identify the target. Can be email, slack channel, pagerduty service, user_id, team_id, etc
+  targetIdentifier: string;
+};
 
 type Props = {
-  triggers: Trigger[];
-  onDelete: (trigger: Trigger) => void;
-  onEdit: (trigger: Trigger) => void;
+  organization: Organization;
+  trigger: Trigger;
+  rule: IncidentRule;
+  actions: Action[];
 };
 
 export default class Actions extends React.Component<Props> {
@@ -29,36 +55,3 @@ export default class Actions extends React.Component<Props> {
     );
   }
 }
-
-const gridCss = css`
-  display: grid;
-  grid-template-columns: 1fr 2fr 3fr;
-  grid-gap: ${space(1)};
-  align-items: center;
-`;
-
-const PanelHeaderGrid = styled(PanelHeader)`
-  ${gridCss};
-`;
-
-const Grid = styled(PanelItem)`
-  ${gridCss};
-`;
-
-const Label = styled('div')`
-  font-size: 1.2em;
-`;
-
-const Condition = styled('div')``;
-
-const MainCondition = styled('div')``;
-const SecondaryCondition = styled('div')`
-  font-size: ${p => p.theme.fontSizeSmall};
-  color: ${p => p.theme.gray2};
-`;
-
-const ButtonBar = styled('div')`
-  display: grid;
-  grid-gap: ${space(1)};
-  grid-auto-flow: column;
-`;
