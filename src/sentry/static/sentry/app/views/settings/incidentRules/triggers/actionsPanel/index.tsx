@@ -1,13 +1,13 @@
 import React from 'react';
+import styled from 'react-emotion';
 
+import {IncidentRule, Trigger} from 'app/views/settings/incidentRules/types';
+import {Organization} from 'app/types';
 import {Panel, PanelBody, PanelItem, PanelHeader} from 'app/components/panels';
 import {t} from 'app/locale';
-import Button from 'app/components/button';
-import Confirm from 'app/components/confirm';
-import EmptyMessage from 'app/views/settings/components/emptyMessage';
+import DropdownAutoCompleteMenu from 'app/components/dropdownAutoCompleteMenu';
+import DropdownButton from 'app/components/dropdownButton';
 import space from 'app/styles/space';
-
-import {IncidentRule, Trigger} from '../types';
 
 enum ActionType {
   EMAIL = 0,
@@ -37,21 +37,39 @@ type Action = {
 };
 
 type Props = {
+  actions?: Action[];
+  className?: string;
   organization: Organization;
-  trigger: Trigger;
   rule: IncidentRule;
+  trigger?: Trigger;
+};
+
+type State = {
   actions: Action[];
 };
 
-export default class Actions extends React.Component<Props> {
+class ActionsPanel extends React.Component<Props, State> {
   render() {
+    const {className} = this.props;
+
     return (
-      <Panel>
-        <PanelHeader>
+      <Panel className={className}>
+        <PanelHeader hasButtons>
           <div>{t('Actions')}</div>
+          <DropdownAutoCompleteMenu>
+            {() => <DropdownButton size="small">{t('Add Action')}</DropdownButton>}
+          </DropdownAutoCompleteMenu>
         </PanelHeader>
-        <PanelBody />
+        <PanelBody>
+          <PanelItem>Test</PanelItem>
+        </PanelBody>
       </Panel>
     );
   }
 }
+
+const ActionsPanelWithSpace = styled(ActionsPanel)`
+  margin-top: ${space(2)};
+`;
+
+export default ActionsPanelWithSpace;
