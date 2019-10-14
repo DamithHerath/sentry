@@ -5,6 +5,7 @@ import {IncidentRule, Trigger} from 'app/views/settings/incidentRules/types';
 import {Organization, Project} from 'app/types';
 import {addErrorMessage, addSuccessMessage} from 'app/actionCreators/indicator';
 import {t, tct} from 'app/locale';
+import Actions from 'app/views/settings/incidentRules/triggers/actions';
 import TriggerForm from 'app/views/settings/incidentRules/triggers/form';
 import space from 'app/styles/space';
 
@@ -52,6 +53,8 @@ class TriggersModal extends React.Component<Props> {
           rule={rule}
           trigger={trigger}
         />
+
+        <Actions organization={organization} rule={rule} trigger={trigger} />
       </div>
     );
   }
