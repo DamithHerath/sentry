@@ -5,9 +5,11 @@ import {IncidentRule, Trigger} from 'app/views/settings/incidentRules/types';
 import {Organization} from 'app/types';
 import {Panel, PanelBody, PanelItem, PanelHeader} from 'app/components/panels';
 import {t} from 'app/locale';
-import DropdownAutoCompleteMenu from 'app/components/dropdownAutoCompleteMenu';
+import DropdownAutoComplete from 'app/components/dropdownAutoComplete';
 import DropdownButton from 'app/components/dropdownButton';
+import SelectControl from 'app/components/forms/selectControl';
 import space from 'app/styles/space';
+import EmptyMessage from 'app/views/settings/components/emptyMessage';
 
 enum ActionType {
   EMAIL = 0,
@@ -33,7 +35,7 @@ type Action = {
   targetType: TargetType;
 
   // How to identify the target. Can be email, slack channel, pagerduty service, user_id, team_id, etc
-  targetIdentifier: string;
+  targetIdentifier: string | null;
 };
 
 type Props = {
@@ -48,20 +50,83 @@ type State = {
   actions: Action[];
 };
 
+const ActionLabel = {
+  [ActionType.EMAIL]: t('E-mail'),
+  [ActionType.SLACK]: t('Slack'),
+  [ActionType.PAGER_DUTY]: t('Pagerduty'),
+};
+
+const TargetLabel = {
+  [TargetType.USER]: t('Member'),
+  [TargetType.TEAM]: t('Team'),
+};
+
 class ActionsPanel extends React.Component<Props, State> {
+  state = {
+    actions: [],
+  };
+
+  handleSelect = value => {
+    console.log('selected value', value);
+    this.setState(state => ({
+      ...state,
+      actions: [
+        ...state.actions,
+        {
+          type: value.value,
+          targetType: TargetType.USER,
+          targetIdentifier: null,
+        },
+      ],
+    }));
+  };
+
   render() {
     const {className} = this.props;
+    const {actions} = this.state;
+
+    const items = Object.entries(ActionLabel).map(([value, label]) => ({value, label}));
 
     return (
       <Panel className={className}>
         <PanelHeader hasButtons>
           <div>{t('Actions')}</div>
-          <DropdownAutoCompleteMenu>
+          <DropdownAutoComplete
+            blendCorner
+            hideInput
+            onSelect={this.handleSelect}
+            items={items}
+          >
             {() => <DropdownButton size="small">{t('Add Action')}</DropdownButton>}
-          </DropdownAutoCompleteMenu>
+          </DropdownAutoComplete>
         </PanelHeader>
         <PanelBody>
-          <PanelItem>Test</PanelItem>
+          {!actions.length && (
+            <EmptyMessage>{t('No Actions have been added')}</EmptyMessage>
+          )}
+          {actions.map((action: Action, i: number) => (
+            <PanelItemGrid key={i}>
+              {ActionLabel[action.type]}
+
+              <SelectControl
+                value={action.targetType}
+                options={Object.entries(TargetLabel).map(([value, label]) => ({
+                  value,
+                  label,
+                }))}
+              />
+
+              {action.targetType === TargetType.USER && (
+                <SelectControl
+                  value={action.targetType}
+                  options={Object.entries(TargetLabel).map(([value, label]) => ({
+                    value,
+                    label,
+                  }))}
+                />
+              )}
+            </PanelItemGrid>
+          ))}
         </PanelBody>
       </Panel>
     );
@@ -69,7 +134,14 @@ class ActionsPanel extends React.Component<Props, State> {
 }
 
 const ActionsPanelWithSpace = styled(ActionsPanel)`
-  margin-top: ${space(2)};
+  margin-top: ${space(4)};
+`;
+
+const PanelItemGrid = styled(PanelItem)`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  grid-gap: ${space(2)};
 `;
 
 export default ActionsPanelWithSpace;

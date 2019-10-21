@@ -6,6 +6,7 @@ import {Client} from 'app/api';
 import {Config, Organization, Project} from 'app/types';
 import {addErrorMessage} from 'app/actionCreators/indicator';
 import {t} from 'app/locale';
+import ActionsPanel from 'app/views/settings/incidentRules/triggers/actionsPanel';
 import Form from 'app/views/settings/components/forms/form';
 import JsonForm from 'app/views/settings/components/forms/jsonForm';
 import withApi from 'app/utils/withApi';
@@ -196,7 +197,7 @@ class TriggerForm extends React.Component<Props, State> {
   };
 
   render() {
-    const {api, config, organization, projects, rule} = this.props;
+    const {api, config, organization, projects, rule, trigger} = this.props;
     const {alertThreshold, resolveThreshold, isInverted} = this.state;
 
     return (
@@ -260,6 +261,7 @@ class TriggerForm extends React.Component<Props, State> {
             },
           ]}
         />
+        <ActionsPanel organization={organization} rule={rule} trigger={trigger} />
       </React.Fragment>
     );
   }
