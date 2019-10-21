@@ -7,9 +7,11 @@ import {Panel, PanelBody, PanelItem, PanelHeader} from 'app/components/panels';
 import {t} from 'app/locale';
 import DropdownAutoComplete from 'app/components/dropdownAutoComplete';
 import DropdownButton from 'app/components/dropdownButton';
-import SelectControl from 'app/components/forms/selectControl';
-import space from 'app/styles/space';
 import EmptyMessage from 'app/views/settings/components/emptyMessage';
+import SelectControl from 'app/components/forms/selectControl';
+import SelectMembers from 'app/components/selectMembers';
+import space from 'app/styles/space';
+import withOrganization from 'app/utils/withOrganization';
 
 enum ActionType {
   EMAIL = 0,
@@ -82,7 +84,7 @@ class ActionsPanel extends React.Component<Props, State> {
   };
 
   render() {
-    const {className} = this.props;
+    const {className, organization} = this.props;
     const {actions} = this.state;
 
     const items = Object.entries(ActionLabel).map(([value, label]) => ({value, label}));
@@ -117,12 +119,10 @@ class ActionsPanel extends React.Component<Props, State> {
               />
 
               {action.targetType === TargetType.USER && (
-                <SelectControl
-                  value={action.targetType}
-                  options={Object.entries(TargetLabel).map(([value, label]) => ({
-                    value,
-                    label,
-                  }))}
+                <SelectMembers
+                  organization={organization}
+                  value={action.targetIdentifier}
+                  onChange={value => console.log(value)}
                 />
               )}
             </PanelItemGrid>
@@ -144,4 +144,4 @@ const PanelItemGrid = styled(PanelItem)`
   grid-gap: ${space(2)};
 `;
 
-export default ActionsPanelWithSpace;
+export default withOrganization(ActionsPanelWithSpace);

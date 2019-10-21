@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom';
 import styled from 'react-emotion';
 
 import {Client} from 'app/api';
-import {Project, Organization} from 'app/types';
+import {Member, Organization, Project, Team} from 'app/types';
 import {addTeamToProject} from 'app/actionCreators/projects';
 import {buildUserId, buildTeamId} from 'app/utils';
 import {t} from 'app/locale';
@@ -25,14 +25,37 @@ import ValueComponent from './valueComponent';
 const getSearchKeyForUser = user =>
   `${user.email && user.email.toLowerCase()} ${user.name && user.name.toLowerCase()}`;
 
+type Actor<T> = {
+  type: T;
+  id: string;
+  name: string;
+};
+
+type Mentionable<T> = {
+  value: string;
+  label: React.ReactElement;
+  searchKey: string;
+  actor: Actor<T>;
+};
+
+type Unmentionable = {
+  disabled: boolean;
+  label: React.ReactElement;
+};
+
+type MentionableTeam = Mentionable<'team'>;
+type UnmentionableTeam = MentionableTeam & Unmentionable;
+type MentionableUser = Mentionable<'user'>;
+type UnmentionableUser = MentionableUser & Unmentionable;
+
 type Props = {
   api: Client;
   project: Project;
   organization: Organization;
   value: any;
-  onChange: (value: any) => void;
-  onInputChange: () => void;
-  disabled: boolean;
+  onChange: (value: any) => any;
+  onInputChange?: (value: any) => any;
+  disabled?: boolean;
 };
 
 /**
@@ -43,7 +66,7 @@ class SelectMembers extends React.Component<Props> {
     project: SentryTypes.Project,
     organization: SentryTypes.Organization,
     value: PropTypes.array,
-    onChange: PropTypes.func,
+    onChange: PropTypes.func.isRequired,
     onInputChange: PropTypes.func,
     disabled: PropTypes.bool,
   };
@@ -100,7 +123,7 @@ class SelectMembers extends React.Component<Props> {
     };
   };
 
-  createMentionableTeam = team => {
+  createMentionableTeam = (team: Team): MentionableTeam => {
     return {
       value: buildTeamId(team.id),
       label: <IdBadge team={team} />,
@@ -113,7 +136,7 @@ class SelectMembers extends React.Component<Props> {
     };
   };
 
-  createUnmentionableTeam = team => {
+  createUnmentionableTeam = (team: Team): UnmentionableTeam => {
     const {organization} = this.props;
     const canAddTeam = organization.access.includes('project:write');
 
@@ -155,7 +178,7 @@ class SelectMembers extends React.Component<Props> {
     return MemberListStore.getAll().map(this.createMentionableUser);
   }
 
-  getMentionableTeams() {
+  getMentionableTeams(): MentionableTeam[] {
     const {project} = this.props;
     const projectData = ProjectsStore.getBySlug(project.slug);
 
@@ -171,8 +194,8 @@ class SelectMembers extends React.Component<Props> {
    *
    * @param {Team[]} teamsInProject A list of teams that are in the current project
    */
-  getTeamsNotInProject(teamsInProject = []) {
-    const teams = TeamStore.getAll() || [];
+  getTeamsNotInProject(teamsInProject: MentionableTeam[] = []): UnmentionableTeam[] {
+    const teams: Team[] = TeamStore.getAll() || [];
     const excludedTeamIds = teamsInProject.map(({actor}) => actor.id);
 
     return teams
@@ -245,7 +268,7 @@ class SelectMembers extends React.Component<Props> {
       .requestPromise(`/organizations/${organization.slug}/members/`, {
         query: {query},
       })
-      .then(data => cb(null, data), err => cb(err));
+      .then((data: Member[]) => cb(null, data), err => cb(err));
   }, 250);
 
   handleLoadOptions = () => {
@@ -264,7 +287,7 @@ class SelectMembers extends React.Component<Props> {
         }
       });
     })
-      .then(members => {
+      .then((members: Member[]) => {
         // Be careful here as we actually want the `users` object, otherwise it means user
         // has not registered for sentry yet, but has been invited
         return members
@@ -273,7 +296,7 @@ class SelectMembers extends React.Component<Props> {
               .map(this.createUnmentionableUser)
           : [];
       })
-      .then(members => {
+      .then((members: UnmentionableUser[]) => {
         return {
           options: [
             ...usersInProject,
