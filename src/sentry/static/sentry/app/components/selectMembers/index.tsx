@@ -1,7 +1,6 @@
 import {debounce} from 'lodash';
 import PropTypes from 'prop-types';
 import React from 'react';
-import ReactDOM from 'react-dom';
 import styled from 'react-emotion';
 
 import {Client} from 'app/api';
@@ -50,7 +49,7 @@ type UnmentionableUser = MentionableUser & Unmentionable;
 
 type Props = {
   api: Client;
-  project: Project;
+  project?: Project;
   organization: Organization;
   value: any;
   onChange: (value: any) => any;
@@ -82,7 +81,7 @@ class SelectMembers extends React.Component<Props> {
     }
   }
 
-  selectRef = React.createRef();
+  selectRef = React.createRef<typeof MultiSelectControl>();
 
   // See comments in `handleAddTeamToProject` for why we close the menu this way
   projectsStoreUnlisten = ProjectsStore.listen(() => {
@@ -180,7 +179,7 @@ class SelectMembers extends React.Component<Props> {
 
   getMentionableTeams(): MentionableTeam[] {
     const {project} = this.props;
-    const projectData = ProjectsStore.getBySlug(project.slug);
+    const projectData = project && ProjectsStore.getBySlug(project.slug);
 
     if (!projectData) {
       return [];
@@ -208,21 +207,21 @@ class SelectMembers extends React.Component<Props> {
    * way to close it.
    */
   closeSelectMenu() {
-    // Close select menu
-    if (this.selectRef.current) {
-      console.log(this.selectRef.current);
-      const input = ReactDOM.findDOMNode(this.selectRef.current).querySelector(
-        '.Select-input input'
-      );
-      if (input) {
-        // I don't think there's another way to close `react-select`
-        input.blur();
-      }
+    if (!this.selectRef.current) {
+      return;
+    }
+
+    const select = this.selectRef.current.select;
+    const input: HTMLInputElement = select.input.input;
+    if (input) {
+      // I don't think there's another way to close `react-select`
+      input.blur();
     }
   }
 
   async handleAddTeamToProject(team) {
     const {api, organization, project, value} = this.props;
+
     // Copy old value
     const oldValue = [...value];
 
@@ -235,8 +234,11 @@ class SelectMembers extends React.Component<Props> {
       // The reason for this is because we have little control over `react-select`'s `AsyncSelect`
       // We can't control when `handleLoadOptions` gets called, but it gets called when select closes, so
       // wait for store to update before closing the menu. Otherwise, we'll have stale items in the select menu
-      await addTeamToProject(api, organization.slug, project.slug, team);
+      if (project) {
+        await addTeamToProject(api, organization.slug, project.slug, team);
+      }
     } catch (err) {
+      console.log(err);
       // Unable to add team to project, revert select menu value
       this.props.onChange(oldValue);
       this.closeSelectMenu();
@@ -271,7 +273,7 @@ class SelectMembers extends React.Component<Props> {
       .then((data: Member[]) => cb(null, data), err => cb(err));
   }, 250);
 
-  handleLoadOptions = () => {
+  handleLoadOptions = (): Promise<{options: any[]}> => {
     const usersInProject = this.getMentionableUsers();
     const teamsInProject = this.getMentionableTeams();
     const teamsNotInProject = this.getTeamsNotInProject(teamsInProject);
@@ -287,14 +289,14 @@ class SelectMembers extends React.Component<Props> {
         }
       });
     })
-      .then((members: Member[]) => {
+      .then(members => {
         // Be careful here as we actually want the `users` object, otherwise it means user
         // has not registered for sentry yet, but has been invited
-        return members
-          ? members
+        return (members
+          ? (members as Member[])
               .filter(({user}) => user && usersInProjectById.indexOf(user.id) === -1)
               .map(this.createUnmentionableUser)
-          : [];
+          : []) as UnmentionableUser[];
       })
       .then((members: UnmentionableUser[]) => {
         return {
@@ -311,10 +313,10 @@ class SelectMembers extends React.Component<Props> {
   render() {
     return (
       <MultiSelectControl
-        filterOptions={(options, filterText) => {
-          return options.filter(({searchKey}) => searchKey.indexOf(filterText) > -1);
-        }}
         ref={this.selectRef}
+        filterOptions={(options, filterText) =>
+          options.filter(({searchKey}) => searchKey.indexOf(filterText) > -1)
+        }
         loadOptions={this.handleLoadOptions}
         defaultOptions
         async
