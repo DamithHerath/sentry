@@ -30,29 +30,80 @@ describe('addQueryParamsToExistingUrl', function() {
   });
 });
 
-describe('appendTagCondition', function() {
-  it('adds simple values', function() {
-    const result = utils.appendTagCondition('error+text', 'color', 'red');
-    expect(result).toEqual('error+text color:red');
+describe('addKeyValueToQueryString', function() {
+  let locationQuery;
+
+  it('adds to Query', function() {
+    locationQuery = {};
+    const result = utils.addKeyValueToQueryString(locationQuery, 'color', 'red');
+
+    expect(result).toEqual({color: 'red'});
   });
 
-  it('handles array current value', function() {
-    const result = utils.appendTagCondition(['', 'thing'], 'color', 'red');
-    expect(result).toEqual('thing color:red');
-  });
+  it('adds to Query with null', function() {
+    locationQuery = {color: null};
+    const result = utils.addKeyValueToQueryString(locationQuery, 'color', 'red');
 
-  it('handles empty string current value', function() {
-    const result = utils.appendTagCondition('', 'color', 'red');
-    expect(result).toEqual('color:red');
-  });
-
-  it('handles null current value', function() {
-    const result = utils.appendTagCondition(null, 'color', 'red');
-    expect(result).toEqual('color:red');
+    expect(result).toEqual({color: 'red'});
   });
 
   it('wraps values with spaces', function() {
-    const result = utils.appendTagCondition(null, 'color', 'purple red');
-    expect(result).toEqual('color:"purple red"');
+    locationQuery = {};
+    const result = utils.addKeyValueToQueryString(locationQuery, 'color', 'green red');
+
+    expect(result).toEqual({color: '"green red"'});
+  });
+
+  it('adds to Query by replacing existing values', function() {
+    locationQuery = {color: 'green'};
+    const result = utils.addKeyValueToQueryString(locationQuery, 'color', 'red');
+
+    expect(result).toEqual({color: 'red'});
+  });
+
+  it('uses addKeyValueToQueryStringQuery appending to Query.query', function() {
+    locationQuery = {color: 'red', query: 'red'};
+    const result = utils.addKeyValueToQueryString(locationQuery, 'query', 'green');
+
+    expect(result).toEqual({color: 'red', query: 'red green'});
+  });
+
+  it('does not error out if query is undefined', function() {
+    locationQuery = undefined;
+    const result = utils.addKeyValueToQueryString(locationQuery, 'color', 'red');
+
+    expect(result).toEqual({color: 'red'});
+  });
+});
+
+describe('addKeyValueToQueryStringQuery', function() {
+  let locationQuery;
+
+  it('adds key-value to Query.query', function() {
+    locationQuery = {};
+    const result = utils.addKeyValueToQueryStringQuery(locationQuery, 'red');
+
+    expect(result).toEqual({query: 'red'});
+  });
+
+  it('wraps key-value that has spaces', function() {
+    locationQuery = {};
+    const result = utils.addKeyValueToQueryStringQuery(locationQuery, 'green red');
+
+    expect(result).toEqual({query: '"green red"'});
+  });
+
+  it('adds key-value to Query.query, replacing existing key-value pairs with the same key', function() {
+    locationQuery = {query: 'color:green taste:sweet color:pink'};
+    const result = utils.addKeyValueToQueryStringQuery(locationQuery, 'color:red');
+
+    expect(result).toEqual({query: 'color:red taste:sweet'});
+  });
+
+  it('adds key-value to Query.query by appending if it has no keys', function() {
+    locationQuery = {query: 'green'};
+    const result = utils.addKeyValueToQueryStringQuery(locationQuery, 'red');
+
+    expect(result).toEqual({query: 'green red'});
   });
 });

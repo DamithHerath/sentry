@@ -2,18 +2,19 @@ import React from 'react';
 import {Link} from 'react-router';
 import _ from 'lodash';
 import queryString from 'query-string';
-
 import {Location} from 'history';
-import {Event, EventTag, Group} from 'app/types';
 
-import EventDataSection from 'app/components/events/eventDataSection';
-import DeviceName from 'app/components/deviceName';
-import {isUrl, generateQueryWithTag} from 'app/utils';
+import {Event, EventTag, Group} from 'app/types';
+import {isUrl} from 'app/utils';
+import {addKeyValueToQueryString} from 'app/utils/queryString';
 import {t} from 'app/locale';
+
+import DeviceName from 'app/components/deviceName';
+import EventDataSection from 'app/components/events/eventDataSection';
+import InlineSvg from 'app/components/inlineSvg';
 import Pills from 'app/components/pills';
 import Pill from 'app/components/pill';
 import VersionHoverCard from 'app/components/versionHoverCard';
-import InlineSvg from 'app/components/inlineSvg';
 
 type EventTagsProps = {
   group: Group;
@@ -32,8 +33,12 @@ class EventTags extends React.Component<EventTagsProps> {
 
   renderPill(tag: EventTag, streamPath: string, releasesPath: string) {
     const {orgId, projectId, location} = this.props;
-    const query = generateQueryWithTag(location.query, tag);
 
+    const query = addKeyValueToQueryString(
+      location.query,
+      'query',
+      `${tag.key}:${tag.value}`
+    );
     const locationSearch = `?${queryString.stringify(query)}`;
 
     return (

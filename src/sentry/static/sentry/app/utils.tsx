@@ -1,8 +1,6 @@
 import _ from 'lodash';
-import {Query} from 'history';
 
 import {Project} from 'app/types/index';
-import {appendTagCondition} from 'app/utils/queryString';
 
 function arrayIsEqual(arr?: any[], other?: any[], deep?: boolean): boolean {
   // if the other array is a falsy value, return
@@ -249,25 +247,3 @@ export type OmitHtmlDivProps<P extends object> = Omit<
   keyof P
 > &
   P;
-
-export function generateQueryWithTag(
-  prevQuery: Query,
-  tag: {key: string; value: string}
-): Query {
-  const query = {...prevQuery};
-
-  // some tags are dedicated query strings since other parts of the app consumes this,
-  // for example, the global selection header.
-  switch (tag.key) {
-    case 'environment':
-      query.environment = tag.value;
-      break;
-    case 'project':
-      query.project = tag.value;
-      break;
-    default:
-      query.query = appendTagCondition(query.query, tag.key, tag.value);
-  }
-
-  return query;
-}
